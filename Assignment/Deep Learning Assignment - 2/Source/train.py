@@ -48,6 +48,7 @@ def train_cnn():
 	with graph.as_default():
 		session_conf = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
 		sess = tf.Session(config=session_conf)
+
 		with sess.as_default():
 			cnn = TextCNN(
 				sequence_length=x_train.shape[1],
@@ -75,20 +76,18 @@ def train_cnn():
 			acc_summary = tf.summary.scalar("accuracy", cnn.accuracy)
 			train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
 			timestamp = str(int(time.time()))
+
 			out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
 			train_summary_dir = os.path.join(out_dir, "summaries", "train")
-			train_summary_writer = tf.summary.FileWriter("./graphs/g1", sess.graph)
+			train_summary_writer = tf.summary.FileWriter(train_summary_dir, sess.graph)
 
 			train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
-
-			timestamp = str(int(time.time()))
-			out_dir = os.path.abspath(os.path.join(os.path.curdir, "trained_model_" + timestamp))
 
 			checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
 			checkpoint_prefix = os.path.join(checkpoint_dir, "model")
 			if not os.path.exists(checkpoint_dir):
 				os.makedirs(checkpoint_dir)
-			saver = tf.train.Saver(tf.all_variables())
+			saver = tf.train.Saver(tf.global_variables(), max_to_keep=5)
 
 			# One training step: train the model with one batch
 			def train_step(x_batch, y_batch):
